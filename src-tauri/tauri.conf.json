@@ -1,0 +1,54 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "xi-launcher",
+  "version": "0.1.0",
+  "identifier": "com.xi-launcher.app",
+  "build": {
+    "beforeDevCommand": "pnpm dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "pnpm build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "xi-launcher",
+        "width": 1000,
+        "height": 600,
+        "decorations": false,
+        "resizable": false,
+        "dragDropEnabled": false
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "plugins": {
+    "updater": {
+      "endpoints": [
+        "https://github.com/InoUno/xi-launcher/releases/latest/download/latest.json"
+      ],
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDcyRkE1MDgyMTRFRjhBNzEKUldSeGl1OFVnbEQ2Y29vRWV4cU8wdEZtTzN1ZFZ0dTlLNXhEY1QzZWxyZjAzR0JrckYveWxIa1YK"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "windows": {
+      "nsis": {
+        "installerIcon": "icons/icon.ico"
+      }
+    },
+    "resources": {
+      "resources/**/*": "resources/"
+    }
+  }
+}

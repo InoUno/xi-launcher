@@ -1,0 +1,19 @@
+{
+  "bundle": {
+    "createUpdaterArtifacts": true
+  },
+  "plugins": {
+    "updater": {
+      "active": true,
+      "dialog": true,
+      "windows": {
+        "installMode": "passive",
+        "installerArgs": []
+      },
+      "endpoints": [
+        "https://github.com/InoUno/xi-launcher/releases/latest/download/latest.json"
+      ],
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDcyRkE1MDgyMTRFRjhBNzEKUldSeGl1OFVnbEQ2Y29vRWV4cU8wdEZtTzN1ZFZ0dTlLNXhEY1QzZWxyZjAzR0JrckYveWxIa1YK"
+    }
+  }
+}

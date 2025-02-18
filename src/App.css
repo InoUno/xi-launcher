@@ -1,0 +1,188 @@
+@import "tailwindcss";
+
+:root {
+  font-family: Verdana, Helvetica, sans-serif;
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 400;
+  
+  @apply select-none overflow-hidden;
+  @apply text-blue-100;
+  @apply bg-gradient-to-br from-sky-950 to-sky-700;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+}
+
+::-webkit-scrollbar {
+  width: 0.6rem;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-sky-800;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-sky-600;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-sky-900;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+}
+
+h1 {
+  font-size: 2.5rem;
+  margin-bottom: 2rem;
+}
+
+h2 {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+h3 {
+  font-size: 1.6rem;
+  margin-bottom: 0.5rem;
+}
+
+h4 {
+  font-size: 1.3rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    @apply text-blue-100;
+    @apply bg-sky-950;
+  }
+
+}
+
+button {
+  @apply cursor-pointer drop-shadow-lg;
+}
+
+.button {
+  @apply bg-slate-800;
+  
+  &:hover {
+    @apply bg-slate-700;
+  }
+
+  &:active {
+    @apply bg-slate-700;
+  }
+}
+
+.button.accept {
+  @apply bg-green-800;
+  
+  &:hover {
+    @apply bg-green-700;
+  }
+
+  &:active {
+    @apply bg-green-700;
+  }
+}
+
+.button.decline {
+  @apply bg-red-900;
+  
+  &:hover {
+    @apply bg-red-800;
+  }
+
+  &:active {
+    @apply bg-red-800;
+  }
+}
+
+.button {
+  @apply px-3 py-2 rounded-sm font-semibold;
+}
+
+.form {
+  input, select {
+    @apply w-full p-2 my-0.5
+      bg-slate-700 text-slate-200
+      border-1 border-slate-800 rounded-sm outline-none;
+    height: 2.5rem;
+  }
+
+  input[type="checkbox"] {
+    @apply mx-2 my-4;
+    @apply cursor-pointer;
+    @apply w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600;
+  }
+
+  input[type="checkbox"] + label {
+    @apply cursor-pointer;
+  }
+
+  .label {
+    @apply ml-2 block uppercase text-sm font-bold text-gray-400;
+  }
+
+  .field {
+    @apply w-full mb-3 px-2;
+  }
+
+  .field:has(input[type="checkbox"]) {
+    @apply pt-4 inline-flex items-center;
+  }
+
+  .half {
+    @apply md:w-1/2;
+  }
+}
+
+.loader {
+  position: absolute;
+  top: 0;
+  right: 100%;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 100%;
+  animation: borealisBar 2.5s linear infinite;
+}
+
+@keyframes borealisBar {
+  0% {
+    left:0%;
+    right:100%;
+    width:0%;
+  }
+  10% {
+    left:0%;
+    right:75%;
+    width:25%;
+  }
+  90% {
+    right:0%;
+    left:75%;
+    width:25%;
+  }
+  100% {
+    left:100%;
+    right:0%;
+    width:0%;
+  }
+}
+
+@keyframes barStripe {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 1em 0;
+  }
+}
