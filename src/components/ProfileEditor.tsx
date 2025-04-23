@@ -1,5 +1,16 @@
 import { useNavigate, useParams } from "@solidjs/router";
-import { createEffect, createMemo, createResource, createSignal, on, onCleanup, onMount, Show } from "solid-js";
+import {
+  createEffect,
+  createMemo,
+  createResource,
+  createSignal,
+  Match,
+  on,
+  onCleanup,
+  onMount,
+  Show,
+  Switch,
+} from "solid-js";
 import { createStore, produce, unwrap } from "solid-js/store";
 import { AuthKind, commands, Profile } from "../bindings";
 import { useData } from "../store";
@@ -93,25 +104,48 @@ const ProfileEditor = () => {
           </input>
         </div>
         <div class="field half pl-1">
-          <input
-            id="retail"
-            type="checkbox"
-            checked={profile.is_retail}
-            onChange={e => {
-              updateProfileInfo("is_retail", e.target.checked);
-              if (e.target.checked && !profile.install?.directory) {
-                updateProfileInfo(
-                  "install",
-                  produce(install => {
-                    install = install || {};
-                    install.directory = "C:\\Program Files (x86)\\PlayOnline\\SquareEnix";
-                  }),
-                );
-              }
-            }}
-          >
-          </input>
-          <label class="cursor-pointer" for="retail">Retail</label>
+          <div class="half">
+            <input
+              id="windower"
+              type="checkbox"
+              checked={profile.use_windower}
+              onChange={e => {
+                updateProfileInfo("use_windower", e.target.checked);
+                if (e.target.checked && !profile.install?.directory) {
+                  updateProfileInfo(
+                    "install",
+                    produce(install => {
+                      install = install || {};
+                      install.directory = "C:\\Program Files (x86)\\PlayOnline\\SquareEnix";
+                    }),
+                  );
+                }
+              }}
+            >
+            </input>
+            <label class="cursor-pointer" for="windower">Windower</label>
+          </div>
+          <div class="half">
+            <input
+              id="retail"
+              type="checkbox"
+              checked={profile.is_retail}
+              onChange={e => {
+                updateProfileInfo("is_retail", e.target.checked);
+                if (e.target.checked && !profile.install?.directory) {
+                  updateProfileInfo(
+                    "install",
+                    produce(install => {
+                      install = install || {};
+                      install.directory = "C:\\Program Files (x86)\\PlayOnline\\SquareEnix";
+                    }),
+                  );
+                }
+              }}
+            >
+            </input>
+            <label class="cursor-pointer" for="retail">Retail</label>
+          </div>
         </div>
 
         <div class="field half">
@@ -134,26 +168,54 @@ const ProfileEditor = () => {
           >
           </FileInput>
         </div>
-        <div class="field half">
-          <label class="label" for="ashita">
-            Ashita directory
-          </label>
-          <FileInput
-            id="ashita"
-            placeholder="Optional, if it exists in the Game Directory"
-            value={profile.install?.ashita_directory ?? ""}
-            onFileChange={path => {
-              updateProfileInfo(
-                "install",
-                produce(install => {
-                  install = install || {};
-                  install.ashita_directory = path;
-                }),
-              );
-            }}
-          >
-          </FileInput>
-        </div>
+
+        <Switch>
+          <Match when={!profile.use_windower}>
+            <div class="field half">
+              <label class="label" for="ashita">
+                Ashita v4 directory
+              </label>
+              <FileInput
+                id="ashita"
+                placeholder="Optional, if it exists in the Game Directory"
+                value={profile.install?.ashita_directory ?? ""}
+                onFileChange={path => {
+                  updateProfileInfo(
+                    "install",
+                    produce(install => {
+                      install = install || {};
+                      install.ashita_directory = path;
+                    }),
+                  );
+                }}
+              >
+              </FileInput>
+            </div>
+          </Match>
+
+          <Match when={profile.use_windower}>
+            <div class="field half">
+              <label class="label" for="windower">
+                Windower directory
+              </label>
+              <FileInput
+                id="windower"
+                placeholder="C:\Tools\Windower"
+                value={profile.install?.windower_directory ?? ""}
+                onFileChange={path => {
+                  updateProfileInfo(
+                    "install",
+                    produce(install => {
+                      install = install || {};
+                      install.windower_directory = path;
+                    }),
+                  );
+                }}
+              >
+              </FileInput>
+            </div>
+          </Match>
+        </Switch>
 
         <Show when={!profile.is_retail}>
           <div class="field half">
@@ -262,58 +324,84 @@ const ProfileEditor = () => {
           </Show>
         </Show>
 
-        <div class="field half">
-          <button
-            class="button w-full"
-            onClick={() => setShowAddons(true)}
-          >
-            Addons
-          </button>
-        </div>
-        <div class="field half">
-          <button
-            class="button w-full"
-            onClick={() => setShowPlugins(true)}
-          >
-            Plugins
-          </button>
-        </div>
+        <Show when={!profile.use_windower}>
+          <div class="field half">
+            <button
+              class="button w-full"
+              onClick={() => setShowAddons(true)}
+            >
+              Addons
+            </button>
+          </div>
+          <div class="field half">
+            <button
+              class="button w-full"
+              onClick={() => setShowPlugins(true)}
+            >
+              Plugins
+            </button>
+          </div>
 
-        <div class="field half">
-          <ResolutionInput
-            label="Resolution"
-            initial={profile.resolution
-              ? { width: profile.resolution.width, height: profile.resolution.height }
-              : undefined}
-            onChange={(width, height) => {
-              updateProfileInfo("resolution", { width, height });
-            }}
-          />
-        </div>
-        <div class="field half">
-          <ResolutionInput
-            label="Background resolution"
-            initial={profile.background_resolution
-              ? { width: profile.background_resolution.width, height: profile.background_resolution.height }
-              : undefined}
-            onChange={(width, height) => {
-              updateProfileInfo("background_resolution", { width, height });
-            }}
-          />
-        </div>
+          <div class="field half">
+            <ResolutionInput
+              label="Resolution"
+              initial={profile.resolution
+                ? { width: profile.resolution.width, height: profile.resolution.height }
+                : undefined}
+              onChange={(width, height) => {
+                updateProfileInfo("resolution", { width, height });
+              }}
+            />
+          </div>
+          <div class="field half">
+            <ResolutionInput
+              label="Background resolution"
+              initial={profile.background_resolution
+                ? { width: profile.background_resolution.width, height: profile.background_resolution.height }
+                : undefined}
+              onChange={(width, height) => {
+                updateProfileInfo("background_resolution", { width, height });
+              }}
+            />
+          </div>
 
-        <div class="field half">
-          <ResolutionInput
-            label="Menu resolution"
-            initial={profile.menu_resolution
-              ? { width: profile.menu_resolution.width, height: profile.menu_resolution.height }
-              : undefined}
-            onChange={(width, height) => {
-              updateProfileInfo("menu_resolution", { width, height });
-            }}
-          />
-        </div>
-        <div class="field half"></div>
+          <div class="field half">
+            <ResolutionInput
+              label="Menu resolution"
+              initial={profile.menu_resolution
+                ? { width: profile.menu_resolution.width, height: profile.menu_resolution.height }
+                : undefined}
+              onChange={(width, height) => {
+                updateProfileInfo("menu_resolution", { width, height });
+              }}
+            />
+          </div>
+          <div class="field half"></div>
+        </Show>
+
+        <Show when={profile.use_windower}>
+          <div class="field half">
+            <label class="label" for="windower_profile">
+              Windower profile name
+            </label>
+            <input
+              id="windower_profile"
+              type="text"
+              placeholder="Profile name"
+              value={profile.windower_profile ?? ""}
+              onInput={e => updateProfileInfo("windower_profile", e.target.value.trim())}
+            >
+            </input>
+          </div>
+          <div class="field half inline-flex items-center pt-5">
+            Ensure the Windower profile exists before launching.
+          </div>
+
+          <div class="field">
+            If the server requires pivoting of DATs/sounds, setup XIPivot for Windower and add the overlay for it:{" "}
+            <code>{profile.server}</code>
+          </div>
+        </Show>
 
         <div class="w-full flex flex-row space-x-4">
           <button

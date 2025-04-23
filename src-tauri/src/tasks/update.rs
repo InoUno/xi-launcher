@@ -54,14 +54,12 @@ pub async fn update_with_versions(
     versions_info: VersionsInfo,
     channel: Channel<UpdateTaskMessage>,
 ) -> anyhow::Result<()> {
-    let ashita_directory = profile
-        .install
-        .get_ashita_dir()
-        .ok_or_else(|| anyhow!("Missing Ashita directory."))?;
-
     let server_filename = profile.get_server_filename();
 
-    let bootloader_base_path = ashita_directory.join(format!("bootloader/{}", server_filename));
+    let bootloader_base_path = profile
+        .get_bootloader_path()
+        .ok_or(anyhow!("Could not determine bootloader path"))?;
+
     let bootloader_versions_path = bootloader_base_path.join("version.txt");
     if let Some(info) =
         part_needs_update(&versions_info.bootloader, &bootloader_versions_path).await
@@ -94,7 +92,10 @@ pub async fn update_with_versions(
         versions_file.flush().await?;
     }
 
-    let dats_base_path = ashita_directory.join(format!("polplugins/DATs/{}", server_filename));
+    let dats_base_path = profile
+        .get_pivot_dat_path()
+        .ok_or(anyhow!("Could not determine XIPivot DAT path"))?;
+
     let dats_versions_path = dats_base_path.join("version.txt");
     if let Some(info) = part_needs_update(&versions_info.dats, &dats_versions_path).await {
         tracing::info!(

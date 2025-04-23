@@ -102,6 +102,11 @@ const ProfileLaunch = () => {
         navigate(`/profile/${id}/edit`);
         break;
 
+      case "NeedsWindower":
+        toast.error("Missing Windower directory.");
+        navigate(`/profile/${id}/edit`);
+        break;
+
       case "NeedsUpdate":
         setAutoLaunch(false);
         return (

@@ -32,6 +32,10 @@ pub struct Profile {
 
     #[serde(skip_serializing_if = "serde_util::is_false")]
     #[serde(default)]
+    pub use_windower: bool,
+
+    #[serde(skip_serializing_if = "serde_util::is_false")]
+    #[serde(default)]
     pub is_retail: bool,
 
     #[serde(default)]
@@ -72,6 +76,9 @@ pub struct Profile {
     #[serde(skip_serializing_if = "serde_util::vec_is_empty")]
     #[serde(default)]
     pub extra_pivots: Vec<String>,
+
+    #[serde(default)]
+    pub windower_profile: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Deserialize, Serialize, Type)]
@@ -91,6 +98,9 @@ pub struct InstallConfig {
     /// If None, and [InstallConfig::directory] is set, then [InstallConfig::directory] is assumed to have Ashita in it as well.
     #[serde(default)]
     pub ashita_directory: Option<PathBuf>,
+
+    #[serde(default)]
+    pub windower_directory: Option<PathBuf>,
 }
 
 impl InstallConfig {
@@ -101,10 +111,17 @@ impl InstallConfig {
     }
 
     pub fn try_get_ashita_dir(&self) -> anyhow::Result<PathBuf> {
-        self.ashita_directory
-            .clone()
-            .or(self.directory.as_ref().map(|dir| dir.join("Ashita")))
+        self.get_ashita_dir()
             .ok_or_else(|| anyhow::anyhow!("Missing Ashita directory."))
+    }
+
+    pub fn get_windower_dir(&self) -> Option<PathBuf> {
+        self.windower_directory.clone()
+    }
+
+    pub fn try_get_windower_dir(&self) -> anyhow::Result<PathBuf> {
+        self.get_windower_dir()
+            .ok_or_else(|| anyhow::anyhow!("Missing Windower directory."))
     }
 }
 
@@ -139,10 +156,32 @@ impl Profiles {
 }
 
 impl Profile {
+    pub fn get_bootloader_path(&self) -> Option<PathBuf> {
+        let base_dir = if self.use_windower {
+            self.install.get_windower_dir()?
+        } else {
+            self.install.get_ashita_dir()?
+        };
+
+        Some(base_dir.join(format!("bootloader/{}", self.get_server_filename())))
+    }
+
+    pub fn get_pivot_dat_path(&self) -> Option<PathBuf> {
+        Some(if self.use_windower {
+            self.install.get_windower_dir()?.join(format!(
+                "addons/XIPivot/data/DATs/{}",
+                self.get_server_filename()
+            ))
+        } else {
+            self.install
+                .get_ashita_dir()?
+                .join(format!("polplugins/DATs/{}", self.get_server_filename()))
+        })
+    }
+
     pub fn get_token_path(&self) -> Option<PathBuf> {
-        Some(self.install.get_ashita_dir()?.join(format!(
-            "bootloader/{}/{}.token",
-            self.get_server_filename(),
+        Some(self.get_bootloader_path()?.join(format!(
+            "{}.token",
             self.account_name.clone().unwrap_or_else(|| self.id.to_string())
         )))
     }

@@ -5,14 +5,15 @@ use specta::Type;
 use tauri::{ipc::Channel, AppHandle};
 
 use crate::{
+    ashita,
     check_game::{check_game_launch, get_versions_info, DownloadInfo, LaunchStatus},
     config::profiles::{AuthKind, Profile, Profiles},
-    game::launch_game,
     state::AppState,
     tasks::{
         install::{install_client, InstallTaskProgress},
         update::{update_with_versions, UpdateTaskMessage},
     },
+    windower,
 };
 
 #[tauri::command]
@@ -237,9 +238,15 @@ pub async fn launch_profile(
         .get(&id)
         .ok_or("No profile with the given ID found.".to_string())?;
 
-    launch_game(profile, password, &app_handle)
-        .await
-        .map_err(|err| format!("Failed to launch game: {err:?}"))?;
+    if profile.use_windower {
+        windower::launch_game(profile, password)
+            .await
+            .map_err(|err| format!("Failed to launch game: {err:?}"))?;
+    } else {
+        ashita::launch_game(profile, password, &app_handle)
+            .await
+            .map_err(|err| format!("Failed to launch game: {err:?}"))?;
+    }
 
     Ok(())
 }

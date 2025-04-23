@@ -116,14 +116,16 @@ const Installer = (props: InstallerProps) => {
 
   return (
     <div class="flex flex-col w-full items-center">
-      <div>The game can be downloaded and installed from the server.</div>
-      <button
-        class="button accept"
-        onClick={startInstall}
-        disabled={getIsInstalling()}
-      >
-        Download and install
-      </button>
+      <Show when={!getIsInstalling()}>
+        <div>The game can be downloaded and installed from the server.</div>
+        <button
+          class="button accept"
+          onClick={startInstall}
+          disabled={getIsInstalling()}
+        >
+          Download and install
+        </button>
+      </Show>
 
       <Show when={status.state !== undefined}>
         <div>

@@ -1,12 +1,13 @@
+mod ashita;
 mod check_game;
 mod commands;
 mod config;
 mod file_download;
-mod game;
 mod state;
 mod task_manager;
 mod tasks;
 mod util;
+mod windower;
 
 use state::AppStateData;
 use tauri::{async_runtime::RwLock, Manager};

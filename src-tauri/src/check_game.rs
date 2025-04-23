@@ -17,6 +17,7 @@ pub enum LaunchStatus {
     NeedsInstall,
     NeedsAndCanInstall { download_info: DownloadInfo },
     NeedsAshita,
+    NeedsWindower,
     NeedsUpdate { versions_info: VersionsInfo },
     NeedsPassword,
     Ready,
@@ -44,19 +45,29 @@ pub async fn check_game_launch(id: u32, state: AppState<'_>) -> anyhow::Result<L
         }
     }
 
-    let ashita_directory = profile
-        .install
-        .ashita_directory
-        .as_ref()
-        .cloned()
-        .unwrap_or(game_directory.join("Ashita"));
+    if profile.use_windower {
+        let Some(windower_directory) = profile.install.windower_directory.as_ref().cloned() else {
+            return Ok(LaunchStatus::NeedsWindower);
+        };
 
-    if !ashita_directory.exists() {
-        return Ok(LaunchStatus::NeedsAshita);
+        if !windower_directory.exists() {
+            return Ok(LaunchStatus::NeedsWindower);
+        }
+    } else {
+        let ashita_directory = profile
+            .install
+            .ashita_directory
+            .as_ref()
+            .cloned()
+            .unwrap_or(game_directory.join("Ashita"));
+
+        if !ashita_directory.exists() {
+            return Ok(LaunchStatus::NeedsAshita);
+        }
     }
 
     tracing::debug!("Checking if update is needed.");
-    if let Some(versions_info) = needs_update(profile, &ashita_directory).await {
+    if let Some(versions_info) = needs_update(profile).await {
         // Cache versions response
         let server = profile.server.clone().unwrap_or_default();
         state.update_cache.insert(server, versions_info.clone());
@@ -133,15 +144,12 @@ pub struct FileInstallConfig {
     pub url: String,
 }
 
-async fn needs_update(profile: &Profile, ashita_directory: &PathBuf) -> Option<VersionsInfo> {
+async fn needs_update(profile: &Profile) -> Option<VersionsInfo> {
     let Some(versions_info) = get_versions_info(profile).await else {
         return None;
     };
 
-    let server_filename = profile.get_server_filename();
-
-    let bootloader_versions_path =
-        ashita_directory.join(format!("bootloader/{}/version.txt", server_filename));
+    let bootloader_versions_path = profile.get_bootloader_path()?.join("version.txt");
     if part_needs_update(&versions_info.bootloader, &bootloader_versions_path)
         .await
         .is_some()
@@ -149,8 +157,7 @@ async fn needs_update(profile: &Profile, ashita_directory: &PathBuf) -> Option<V
         return Some(versions_info);
     }
 
-    let dats_versions_path =
-        ashita_directory.join(format!("polplugins/DATs/{}/version.txt", server_filename));
+    let dats_versions_path = profile.get_pivot_dat_path()?.join("version.txt");
     if part_needs_update(&versions_info.dats, &dats_versions_path)
         .await
         .is_some()
