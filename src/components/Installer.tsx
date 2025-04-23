@@ -3,7 +3,7 @@ import { createMemo, createSignal, onCleanup, Show } from "solid-js";
 import { createStore, produce } from "solid-js/store";
 import toast from "solid-toast";
 import { commands, FileInstallConfig, InstallTaskProgress } from "../bindings";
-import { unwrapResult } from "../util";
+import { bytesToReadable, unwrapResult } from "../util";
 
 interface InstallStatus {
   state?: string;
@@ -17,10 +17,6 @@ interface InstallerProps {
   downloadInfo: FileInstallConfig[];
   isComplete: () => any;
 }
-
-const KILOBYTES = 1024;
-const MEGABYTES = KILOBYTES * 1024;
-const GIGABYTES = MEGABYTES * 1024;
 
 const Installer = (props: InstallerProps) => {
   const [getIsInstalling, setIsInstalling] = createSignal<boolean>(false);
@@ -88,26 +84,14 @@ const Installer = (props: InstallerProps) => {
     if (!status.expected_final || !status.current_progress) {
       return null;
     }
-    if (status.expected_final > GIGABYTES) {
-      return `${(status.current_progress / GIGABYTES).toFixed(1)} GB`;
-    } else if (status.expected_final > MEGABYTES) {
-      return `${(status.current_progress / MEGABYTES).toFixed(1)} MB`;
-    } else {
-      return `${(status.current_progress / KILOBYTES).toFixed(1)} KB`;
-    }
+    return bytesToReadable(status.current_progress, status.expected_final);
   });
 
   const sizeTotal = createMemo(() => {
     if (!status.expected_final) {
       return null;
     }
-    if (status.expected_final > GIGABYTES) {
-      return `${(status.expected_final / GIGABYTES).toFixed(1)} GB`;
-    } else if (status.expected_final > MEGABYTES) {
-      return `${(status.expected_final / MEGABYTES).toFixed(1)} MB`;
-    } else {
-      return `${(status.expected_final / KILOBYTES).toFixed(1)} KB`;
-    }
+    return bytesToReadable(status.expected_final);
   });
 
   onCleanup(() => {

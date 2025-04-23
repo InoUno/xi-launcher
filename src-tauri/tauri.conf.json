@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "xi-launcher",
-  "version": "0.2.0",
-  "identifier": "com.xi-launcher.app",
+  "productName": "XI Launcher",
+  "version": "0.3.0",
+  "identifier": "inouno.xi-launcher",
   "build": {
     "beforeDevCommand": "pnpm dev",
     "devUrl": "http://localhost:1420",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "xi-launcher",
+        "title": "XI Launcher",
         "width": 1000,
         "height": 600,
         "decorations": false,

@@ -1,7 +1,7 @@
 {
   "name": "xi-launcher",
-  "version": "0.1.0",
-  "description": "",
+  "version": "0.3.0",
+  "description": "XI Launcher",
   "type": "module",
   "scripts": {
     "start": "vite",
@@ -16,6 +16,7 @@
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-dialog": "~2",
     "@tauri-apps/plugin-opener": "^2",
+    "@tauri-apps/plugin-process": "^2",
     "@tauri-apps/plugin-shell": "~2",
     "@tauri-apps/plugin-updater": "~2",
     "@tauri-apps/plugin-window-state": "~2",
