@@ -19,7 +19,7 @@ const ToggleList = (props: ToggleListProps) => {
     <form
       onSubmit={e => {
         e.preventDefault();
-        props.onComplete(options.map(x => x.name) ?? []);
+        props.onComplete(options.filter(x => x.selected).map(x => x.name) ?? []);
       }}
       class="w-full h-full flex flex-col"
     >
