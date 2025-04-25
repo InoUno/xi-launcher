@@ -2,7 +2,7 @@ import { Channel } from "@tauri-apps/api/core";
 import { createMemo, createSignal, onCleanup, Show } from "solid-js";
 import { createStore, produce } from "solid-js/store";
 import toast from "solid-toast";
-import { commands, FileInstallConfig, InstallTaskProgress } from "../bindings";
+import { commands, FileInstallConfig, InstallTaskProgress, Profile } from "../bindings";
 import { bytesToReadable, unwrapResult } from "../util";
 
 interface InstallStatus {
@@ -13,19 +13,61 @@ interface InstallStatus {
 }
 
 interface InstallerProps {
-  id: number;
+  profile: Profile;
   downloadInfo: FileInstallConfig[];
   isComplete: () => any;
 }
 
+const foldersThatNeedSubFolder = new Set(
+  ["Program Files", "Program Files (x86)"],
+);
+
 const Installer = (props: InstallerProps) => {
   const [getIsInstalling, setIsInstalling] = createSignal<boolean>(false);
   const [status, setStatus] = createStore<InstallStatus>({});
+  const [getFolderName, setFolderName] = createSignal<string>("");
+
+  const requiresFolderName = createMemo(() => {
+    const directory = props.profile.install?.directory;
+    if (!directory) {
+      return true;
+    }
+    const split = directory.split("\\");
+    let idx = split.length - 1;
+    let last = split[idx];
+    while (last.trim().length == 0) {
+      if (idx <= 0) {
+        return true;
+      }
+      idx--;
+      last = split[idx];
+    }
+
+    if (last.indexOf(":") > -1) {
+      return true;
+    }
+    return foldersThatNeedSubFolder.has(last);
+  });
 
   const startInstall = async () => {
     if (getIsInstalling()) {
       return;
     }
+
+    const folderName = getFolderName();
+    if (folderName && props.profile.install) {
+      let { profile } = props;
+      if (!profile.install!.directory?.endsWith("\\")) {
+        profile.install!.directory += "\\";
+      }
+      profile.install!.directory += folderName;
+      await commands.saveProfile(profile.id, profile);
+      console.log(`Updated install directory to: ${profile.install!.directory}`);
+    } else if (requiresFolderName()) {
+      toast.error("Please provide a folder name to install the game into.");
+      return;
+    }
+
     setIsInstalling(true);
 
     const channel = new Channel<InstallTaskProgress>();
@@ -69,7 +111,7 @@ const Installer = (props: InstallerProps) => {
       }
     };
 
-    let result = await commands.installGameForProfile(props.id, props.downloadInfo, channel);
+    let result = await commands.installGameForProfile(props.profile.id, props.downloadInfo, channel);
     if (result.status == "error") {
       props.isComplete();
     }
@@ -95,13 +137,36 @@ const Installer = (props: InstallerProps) => {
   });
 
   onCleanup(() => {
-    commands.cancelPossibleProfileTask(props.id);
+    commands.cancelPossibleProfileTask(props.profile.id);
   });
 
   return (
-    <div class="flex flex-col w-full items-center">
+    <div class="flex flex-col w-full items-center gap-2">
       <Show when={!getIsInstalling()}>
-        <div>The game can be downloaded and installed from the server.</div>
+        <div>The client can be downloaded and installed from the server.</div>
+        <Show
+          fallback={<div>Please provide a folder name the game should be installed into:</div>}
+          when={!requiresFolderName()}
+        >
+          <div>
+            Do you want to place the game files directly into{" "}
+            <code class="whitespace-nowrap text-green-200">{props.profile.install?.directory}</code>?
+          </div>
+          <div>If not, please provide a folder name that the game files will be installed into:</div>
+        </Show>
+        <div class="form field inline-flex items-center">
+          <code class="whitespace-nowrap">
+            {props.profile.install?.directory}
+            {props.profile.install?.directory?.endsWith("\\") ? "" : "\\"}
+          </code>
+          <input
+            type="text"
+            value={getFolderName()}
+            onInput={e => setFolderName(e.target.value)}
+            placeholder="Folder name"
+          >
+          </input>
+        </div>
         <button
           class="button accept"
           onClick={startInstall}

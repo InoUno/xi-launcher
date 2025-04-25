@@ -1,5 +1,6 @@
 import { useNavigate, useParams } from "@solidjs/router";
 import { createEffect, createResource, createSignal, Match, Switch } from "solid-js";
+import { unwrap } from "solid-js/store";
 import toast from "solid-toast";
 import { commands } from "../bindings";
 import { useData } from "../store";
@@ -88,7 +89,7 @@ const ProfileLaunch = () => {
         setAutoLaunch(false);
         return (
           <Installer
-            id={id}
+            profile={unwrap(profile)}
             downloadInfo={result.data.data.download_info}
             isComplete={() => {
               refetchStatus();
@@ -150,17 +151,19 @@ const ProfileLaunch = () => {
 
   return (
     <div class="w-full h-full flex flex-col items-center">
-      <Switch>
-        <Match when={resource.loading}>
-          <div class="w-full">Checking game launch...</div>
-        </Match>
-        <Match when={!resource() || resource()?.status == "error"}>
-          <div class="w-full">Error while checking for game launch.</div>
-        </Match>
-        <Match when={resource() && resource()?.status == "ok"}>
-          {actionComponent()}
-        </Match>
-      </Switch>
+      <div class="w-full flex-grow">
+        <Switch>
+          <Match when={resource.loading}>
+            Checking game launch...
+          </Match>
+          <Match when={!resource() || resource()?.status == "error"}>
+            Error while checking for game launch.
+          </Match>
+          <Match when={resource() && resource()?.status == "ok"}>
+            {actionComponent()}
+          </Match>
+        </Switch>
+      </div>
       <button
         class="button w-full my-2"
         onClick={() => {
