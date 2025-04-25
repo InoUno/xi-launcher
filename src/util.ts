@@ -1,6 +1,6 @@
 import { open } from "@tauri-apps/plugin-dialog";
 import toast from "solid-toast";
-import { commands, Profile, Result } from "./bindings";
+import { Result } from "./bindings";
 
 export async function promptFolder(
   setFolder: (path: string | null) => any,

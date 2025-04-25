@@ -1,6 +1,5 @@
 import { useNavigate, useParams } from "@solidjs/router";
 import { createEffect, createResource, createSignal, Match, Switch } from "solid-js";
-import { unwrap } from "solid-js/store";
 import toast from "solid-toast";
 import { commands } from "../bindings";
 import { useData } from "../store";

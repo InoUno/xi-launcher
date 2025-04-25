@@ -4,10 +4,7 @@ import { For } from "solid-js";
 import { commands } from "../bindings";
 import { useData } from "../store";
 
-interface ProfileListProps {
-}
-
-const ProfileList = (props: ProfileListProps) => {
+const ProfileList = () => {
   const { profiles, profilesRefetch } = useData();
   const navigate = useNavigate();
 

@@ -1,11 +1,9 @@
 import { createContext, FlowProps, useContext } from "solid-js";
 import { createProfilesStore } from "./profiles";
-import { createSettingsStore } from "./settings";
 
 function makeDataContext() {
   return {
     ...createProfilesStore(),
-    ...createSettingsStore(),
   };
 }
 
