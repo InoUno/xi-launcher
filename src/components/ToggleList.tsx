@@ -1,6 +1,6 @@
 import { FaRegularCircle, FaSolidCircle } from "solid-icons/fa";
-import { createEffect, createMemo, createResource, createSignal, For, Show, Signal } from "solid-js";
-import { createStore, produce, reconcile, unwrap } from "solid-js/store";
+import { For, Show } from "solid-js";
+import { createStore, produce } from "solid-js/store";
 
 export interface Option {
   name: string;
