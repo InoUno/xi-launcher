@@ -1,19 +1,19 @@
-use std::{os::windows::process::CommandExt, process::Command};
+use std::{os::windows::process::CommandExt, path::PathBuf, process::Command};
 
 use anyhow::{anyhow, Context};
 
 use tauri::{path::BaseDirectory, AppHandle, Manager};
 use tokio::{
     fs::{self, File},
-    io::AsyncWriteExt,
+    io::{AsyncReadExt, AsyncWriteExt, BufWriter},
 };
+use winreg::{enums::HKEY_LOCAL_MACHINE, RegKey};
 
 use crate::config::profiles::{AuthKind, Profile};
 
 pub async fn launch_game(
     profile: &Profile,
     provided_password: Option<String>,
-    app_handle: &AppHandle,
 ) -> anyhow::Result<()> {
     let mut exe = profile.install.try_get_ashita_dir()?;
     exe.push("Ashita-cli.exe");
@@ -23,9 +23,7 @@ pub async fn launch_game(
     }
 
     let profile_filename = profile.get_profile_filename();
-    let server_folder_name = profile.get_server_filename();
-
-    generate_ashita_files(profile, &profile_filename, &server_folder_name, app_handle).await?;
+    update_gamepad_config(profile).await?;
 
     let working_dir = exe.parent().unwrap().to_path_buf();
 
@@ -97,22 +95,33 @@ pub async fn launch_game(
     Ok(())
 }
 
-pub async fn generate_ashita_files(
-    profile: &Profile,
-    profile_filename: &str,
-    server_folder_name: &str,
-    app_handle: &AppHandle,
-) -> anyhow::Result<()> {
-    let resource_path = app_handle
-        .path()
-        .resolve("resources/ashita_base.ini", BaseDirectory::Resource)
-        .with_context(|| format!("Could not resolve Ashita base ini resource file"))?;
+pub async fn update_ashita_files(profile: &Profile, app_handle: &AppHandle) -> anyhow::Result<()> {
+    let profile_filename = profile.get_profile_filename();
+    let server_folder_name = profile.get_server_filename();
 
-    generate_script_file(profile, profile_filename).await?;
+    make_script_file(profile, &profile_filename).await?;
+
     let ashita_directory = profile.install.try_get_ashita_dir()?;
+    let ini_file_path = ashita_directory.join(format!("config/boot/{}.ini", &profile_filename));
 
-    let mut ashita_ini = ini::Ini::load_from_file(resource_path)
-        .with_context(|| anyhow!("Could not load Ashita base resource file."))?;
+    // Update profile ini file if it exists already
+    let mut ashita_ini = if ini_file_path.exists() {
+        ini::Ini::load_from_file(&ini_file_path).with_context(|| {
+            anyhow!(
+                "Could not load Ashita profile ini file: {}",
+                ini_file_path.display()
+            )
+        })?
+    } else {
+        // Else start from a base ini file
+        let ini_resource_path = app_handle
+            .path()
+            .resolve("resources/ashita_base.ini", BaseDirectory::Resource)
+            .with_context(|| format!("Could not resolve Ashita base ini resource file"))?;
+
+        ini::Ini::load_from_file(ini_resource_path)
+            .with_context(|| anyhow!("Could not load Ashita base resource file."))?
+    };
 
     profile.name.as_ref().map(|name| {
         ashita_ini
@@ -200,10 +209,56 @@ pub async fn generate_ashita_files(
         .with_section(Some("ashita.polplugins.args"))
         .set("pivot", profile_filename);
 
-    // Create the profile ashita ini file
-    let ini_file_path = ashita_directory.join(format!("config/boot/{}.ini", &profile_filename));
-
+    // Update/create the profile ashita ini file
     fs::create_dir_all(ini_file_path.parent().unwrap()).await?;
+    ashita_ini.write_to_file(&ini_file_path).with_context(|| {
+        anyhow!(
+            "Could not write Ashita ini file to {}",
+            ini_file_path.display()
+        )
+    })?;
+
+    Ok(())
+}
+
+pub async fn update_gamepad_config(profile: &Profile) -> anyhow::Result<()> {
+    let ashita_directory = profile.install.try_get_ashita_dir()?;
+    let ini_file_path = ashita_directory.join(format!(
+        "config/boot/{}.ini",
+        &profile.get_profile_filename()
+    ));
+
+    if !ini_file_path.exists() {
+        return Ok(());
+    }
+
+    // Update profile ini file if it exists already
+    let mut ashita_ini = ini::Ini::load_from_file(&ini_file_path).with_context(|| {
+        anyhow!(
+            "Could not load Ashita profile ini file: {}",
+            ini_file_path.display()
+        )
+    })?;
+
+    // Retrieve gamepad settings from registry
+    let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
+    let ffxi_reg = hklm.open_subkey("SOFTWARE\\WOW6432Node\\PlayOnline\\SQUARE\\FinalFantasyXI")?;
+
+    ashita_ini
+        .with_section(Some("ffxi.registry"))
+        .set(
+            "padmode000",
+            ffxi_reg.get_value("padmode000").unwrap_or("-1".to_string()),
+        )
+        .set(
+            "padsin000",
+            ffxi_reg.get_value("padsin000").unwrap_or("-1".to_string()),
+        )
+        .set(
+            "padguid000",
+            ffxi_reg.get_value("padguid000").unwrap_or("-1".to_string()),
+        );
+
     ashita_ini.write_to_file(&ini_file_path).with_context(|| {
         anyhow!(
             "Could not write Ashita ini file to {}",
@@ -261,10 +316,21 @@ async fn generate_pivot_ini(
     Ok(())
 }
 
-async fn generate_script_file(profile: &Profile, profile_filename: &str) -> anyhow::Result<()> {
+async fn make_script_file(profile: &Profile, profile_filename: &str) -> anyhow::Result<()> {
     let script_name = format!("scripts/{}.txt", profile_filename);
     let script_path = profile.install.try_get_ashita_dir()?.join(&script_name);
 
+    if script_path.exists() {
+        update_script_file(profile, script_path).await
+    } else {
+        new_script_file(profile, script_path).await
+    }
+}
+
+const XIL_START: &'static str = "\n## XI_LAUNCHER START";
+const XIL_END: &'static str = "\n## XI_LAUNCHER END";
+
+async fn new_script_file(profile: &Profile, script_path: PathBuf) -> anyhow::Result<()> {
     fs::create_dir_all(script_path.parent().unwrap()).await?;
     let mut file = File::create(&script_path)
         .await
@@ -275,12 +341,13 @@ async fn generate_script_file(profile: &Profile, profile_filename: &str) -> anyh
 /load thirdparty
 /load addons
 /load screenshot
-
 "#
         .as_bytes(),
     )
     .await?;
 
+    // Wrap launcher-managed lines in start and end markers
+    file.write(XIL_START.as_bytes()).await?;
     if let Some(plugins) = &profile.enabled_plugins {
         for plugin in plugins {
             file.write(format!("/load {}\n", plugin).as_bytes()).await?;
@@ -293,9 +360,11 @@ async fn generate_script_file(profile: &Profile, profile_filename: &str) -> anyh
                 .await?;
         }
     }
+    file.write(XIL_END.as_bytes()).await?;
 
     file.write(
         r#"
+
 /bind insert /ashita
 /bind SYSRQ /screenshot hide
 /bind ^v /paste
@@ -322,6 +391,54 @@ async fn generate_script_file(profile: &Profile, profile_filename: &str) -> anyh
     .await?;
 
     file.flush().await?;
+
+    Ok(())
+}
+
+async fn update_script_file(profile: &Profile, script_path: PathBuf) -> anyhow::Result<()> {
+    let mut existing_file = File::open(&script_path)
+        .await
+        .with_context(|| format!("Could not create file at {}", script_path.display()))?;
+
+    let mut content: String = String::new();
+    existing_file.read_to_string(&mut content).await?;
+
+    let start = content.find(XIL_START).ok_or(anyhow!(
+        "Could not find '{XIL_START}' marker in {}",
+        script_path.display()
+    ))?;
+
+    let end = (&content[start..]).find(XIL_END).ok_or(anyhow!(
+        "Could not find '{XIL_END}' marker in {}",
+        script_path.display()
+    ))? + start
+        + XIL_END.len();
+
+    // Generate new launcher content
+    let mut new_xil_content = BufWriter::new(Vec::new());
+    if let Some(plugins) = &profile.enabled_plugins {
+        for plugin in plugins {
+            new_xil_content
+                .write(format!("/load {}\n", plugin).as_bytes())
+                .await?;
+        }
+    }
+
+    if let Some(addons) = &profile.enabled_addons {
+        for addon in addons {
+            new_xil_content
+                .write(format!("/addon load {}\n", addon).as_bytes())
+                .await?;
+        }
+    }
+
+    let mut file = File::create(&script_path)
+        .await
+        .with_context(|| format!("Could not create file at {}", script_path.display()))?;
+
+    file.write_all(&content.as_bytes()[..start]).await?;
+    file.write_all(new_xil_content.buffer()).await?;
+    file.write_all(&content.as_bytes()[end..]).await?;
 
     Ok(())
 }

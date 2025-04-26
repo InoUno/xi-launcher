@@ -28,8 +28,15 @@ pub async fn save_profile(
     id: Option<u32>,
     profile: Profile,
     state: AppState<'_>,
+    app_handle: AppHandle,
 ) -> Result<(), String> {
     let mut state = state.write().await;
+
+    if !profile.use_windower {
+        ashita::update_ashita_files(&profile, &app_handle)
+            .await
+            .map_err(|err| format!("Could not update Ashita files: {err:?}"))?;
+    }
 
     if let Some(existing_id) = id {
         tracing::info!("Saving profile {}.", existing_id);
@@ -228,7 +235,6 @@ pub async fn launch_profile(
     id: u32,
     password: Option<String>,
     state: AppState<'_>,
-    app_handle: AppHandle,
 ) -> Result<(), String> {
     let read_state = state.read().await;
 
@@ -243,7 +249,7 @@ pub async fn launch_profile(
             .await
             .map_err(|err| format!("Failed to launch game: {err:?}"))?;
     } else {
-        ashita::launch_game(profile, password, &app_handle)
+        ashita::launch_game(profile, password)
             .await
             .map_err(|err| format!("Failed to launch game: {err:?}"))?;
     }

@@ -44,9 +44,6 @@ const ProfileLaunch = () => {
     if (!isLaunching()) {
       setIsLaunching(true);
       try {
-        // Save profile, in order to update any defaults is possible
-        await saveProfile(id);
-
         await commands.launchProfile(id, password).then(result => {
           unwrapResult(result);
           navigate("/");
