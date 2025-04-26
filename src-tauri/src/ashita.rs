@@ -240,9 +240,23 @@ pub async fn update_gamepad_config(profile: &Profile) -> anyhow::Result<()> {
         )
     })?;
 
-    // Retrieve gamepad settings from registry
+    // Retrieve gamepad settings from registry. Try default first, then US, else EU.
     let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
-    let ffxi_reg = hklm.open_subkey("SOFTWARE\\WOW6432Node\\PlayOnline\\SQUARE\\FinalFantasyXI")?;
+    let mut ffxi_reg =
+        hklm.open_subkey("SOFTWARE\\WOW6432Node\\PlayOnline\\SQUARE\\FinalFantasyXI");
+    if ffxi_reg.is_err() {
+        ffxi_reg =
+            hklm.open_subkey("SOFTWARE\\WOW6432Node\\PlayOnlineUS\\SquareEnix\\FinalFantasyXI");
+        if ffxi_reg.is_err() {
+            ffxi_reg =
+                hklm.open_subkey("SOFTWARE\\WOW6432Node\\PlayOnlineEU\\SquareEnix\\FinalFantasyXI");
+        }
+    }
+
+    let Ok(ffxi_reg) = ffxi_reg else {
+        tracing::warn!("Did not find FFXI registry to pull data from.");
+        return Ok(());
+    };
 
     ashita_ini
         .with_section(Some("ffxi.registry"))
