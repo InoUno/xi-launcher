@@ -247,7 +247,10 @@ pub async fn update_gamepad_config(profile: &Profile) -> anyhow::Result<()> {
         .or_else(|_| hklm.open_subkey("SOFTWARE\\WOW6432Node\\PlayOnline\\SQUARE\\FinalFantasyXI"))
         .or_else(|_| {
             hklm.open_subkey("SOFTWARE\\WOW6432Node\\PlayOnlineEU\\SquareEnix\\FinalFantasyXI")
-        });
+        })
+        .or_else(|_| hklm.open_subkey("SOFTWARE\\PlayOnlineUS\\SquareEnix\\FinalFantasyXI"))
+        .or_else(|_| hklm.open_subkey("SOFTWARE\\PlayOnline\\SQUARE\\FinalFantasyXI"))
+        .or_else(|_| hklm.open_subkey("SOFTWARE\\PlayOnlineEU\\SquareEnix\\FinalFantasyXI"));
 
     let Ok(ffxi_reg) = ffxi_reg else {
         tracing::warn!("Did not find FFXI registry to pull data from.");
