@@ -15,7 +15,7 @@ const ProfileLaunch = () => {
 
   const navigate = useNavigate();
 
-  const { profiles, saveProfile } = useData();
+  const { profiles } = useData();
 
   const profile = profiles.map?.[id];
   if (!profile) {
