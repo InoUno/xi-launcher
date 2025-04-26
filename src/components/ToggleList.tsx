@@ -51,7 +51,7 @@ const ToggleList = (props: ToggleListProps) => {
           type="submit"
           class="button accept w-full"
         >
-          Save
+          Accept
         </button>
       </div>
     </form>
