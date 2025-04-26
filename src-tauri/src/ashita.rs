@@ -321,16 +321,21 @@ async fn make_script_file(profile: &Profile, profile_filename: &str) -> anyhow::
     let script_path = profile.install.try_get_ashita_dir()?.join(&script_name);
 
     if script_path.exists() {
-        update_script_file(profile, script_path).await
+        let update_result = update_script_file(profile, &script_path).await;
+        if update_result.is_err() {
+            new_script_file(profile, &script_path).await
+        } else {
+            update_result
+        }
     } else {
-        new_script_file(profile, script_path).await
+        new_script_file(profile, &script_path).await
     }
 }
 
 const XIL_START: &'static str = "\n## XI_LAUNCHER START";
 const XIL_END: &'static str = "\n## XI_LAUNCHER END";
 
-async fn new_script_file(profile: &Profile, script_path: PathBuf) -> anyhow::Result<()> {
+async fn new_script_file(profile: &Profile, script_path: &PathBuf) -> anyhow::Result<()> {
     fs::create_dir_all(script_path.parent().unwrap()).await?;
     let mut file = File::create(&script_path)
         .await
@@ -348,6 +353,7 @@ async fn new_script_file(profile: &Profile, script_path: PathBuf) -> anyhow::Res
 
     // Wrap launcher-managed lines in start and end markers
     file.write(XIL_START.as_bytes()).await?;
+    file.write(b"\n").await?;
     if let Some(plugins) = &profile.enabled_plugins {
         for plugin in plugins {
             file.write(format!("/load {}\n", plugin).as_bytes()).await?;
@@ -395,7 +401,7 @@ async fn new_script_file(profile: &Profile, script_path: PathBuf) -> anyhow::Res
     Ok(())
 }
 
-async fn update_script_file(profile: &Profile, script_path: PathBuf) -> anyhow::Result<()> {
+async fn update_script_file(profile: &Profile, script_path: &PathBuf) -> anyhow::Result<()> {
     let mut existing_file = File::open(&script_path)
         .await
         .with_context(|| format!("Could not create file at {}", script_path.display()))?;
@@ -416,6 +422,8 @@ async fn update_script_file(profile: &Profile, script_path: PathBuf) -> anyhow::
 
     // Generate new launcher content
     let mut new_xil_content = BufWriter::new(Vec::new());
+    new_xil_content.write(XIL_START.as_bytes()).await?;
+    new_xil_content.write(b"\n").await?;
     if let Some(plugins) = &profile.enabled_plugins {
         for plugin in plugins {
             new_xil_content
@@ -431,6 +439,7 @@ async fn update_script_file(profile: &Profile, script_path: PathBuf) -> anyhow::
                 .await?;
         }
     }
+    new_xil_content.write(XIL_END.as_bytes()).await?;
 
     let mut file = File::create(&script_path)
         .await
