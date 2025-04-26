@@ -308,9 +308,20 @@ pub async fn list_ashita_plugins(ashita_directory: PathBuf) -> Result<Vec<String
     for entry in entries {
         entry
             .ok()
-            .filter(|e| e.file_type().map(|e| e.is_dir()).unwrap_or_default())
-            .and_then(|e| e.file_name().into_string().ok())
-            .map(|name| plugins.push(name));
+            .filter(|e| e.file_type().map(|e| e.is_file()).unwrap_or_default())
+            .filter(|e| {
+                e.path()
+                    .extension()
+                    .map(|ext| ext == "dll")
+                    .unwrap_or_default()
+            })
+            .and_then(|e| {
+                e.path()
+                    .file_stem()
+                    .and_then(|os_str| os_str.to_str())
+                    .map(|s| s.to_owned())
+            })
+            .map(|name| plugins.push(name.to_owned()));
     }
 
     Ok(plugins)

@@ -354,16 +354,6 @@ async fn new_script_file(profile: &Profile, script_path: &PathBuf) -> anyhow::Re
         .await
         .with_context(|| format!("Could not create file at {}", script_path.display()))?;
 
-    file.write(
-        r#"
-/load thirdparty
-/load addons
-/load screenshot
-"#
-        .as_bytes(),
-    )
-    .await?;
-
     // Wrap launcher-managed lines in start and end markers
     file.write(XIL_START.as_bytes()).await?;
     file.write(b"\n").await?;

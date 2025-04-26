@@ -56,7 +56,11 @@ export const DEFAULT_ADDONS: Set<string> = new Set([
   "tparty",
 ]);
 
-export const DEFAULT_PLUGINS: Set<string> = new Set([]);
+export const DEFAULT_PLUGINS: Set<string> = new Set([
+  "addons",
+  "thirdparty",
+  "screenshot",
+]);
 
 export async function saveProfileWithDefaults(id: number | null, profile?: Profile) {
   if (!profile) {
