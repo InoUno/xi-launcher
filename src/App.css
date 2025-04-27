@@ -81,6 +81,18 @@ button {
   }
 }
 
+.button.neutral {
+  @apply bg-blue-800;
+  
+  &:hover {
+    @apply bg-blue-700;
+  }
+
+  &:active {
+    @apply bg-blue-700;
+  }
+}
+
 .button.accept {
   @apply bg-green-800;
   

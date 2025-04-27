@@ -321,7 +321,7 @@ const ProfileEditor = () => {
         <Show when={!profile.use_windower}>
           <div class="field half">
             <button
-              class="button w-full"
+              class="button neutral w-full"
               onClick={() => setShowAddons(true)}
             >
               Addons
@@ -329,7 +329,7 @@ const ProfileEditor = () => {
           </div>
           <div class="field half">
             <button
-              class="button w-full"
+              class="button neutral w-full"
               onClick={() => setShowPlugins(true)}
             >
               Plugins
