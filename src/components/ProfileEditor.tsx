@@ -28,6 +28,7 @@ const ProfileEditor = () => {
 
   const [getShowAddons, setShowAddons] = createSignal<boolean>(false);
   const [getShowPlugins, setShowPlugins] = createSignal<boolean>(false);
+  const [getConfirmDelete, setConfirmDelete] = createSignal<boolean>(false);
 
   const onKeyDown = (ev: KeyboardEvent) => {
     if (ev.key == "Escape") {
@@ -46,16 +47,9 @@ const ProfileEditor = () => {
     window.removeEventListener("keydown", onKeyDown);
   });
 
-  const { profiles, saveProfile, deleteProfile } = useData();
+  const { saveProfile, deleteProfile, getProfileInfo, nextProfileId } = useData();
 
-  const [profile, updateProfileInfo] = createStore<Profile>(
-    id ? profiles.map?.[id]! : {
-      id: 0,
-      name: `Profile ${(profiles.ids?.length! ?? 0) + 1}`,
-      install: {},
-      is_retail: false,
-    },
-  );
+  const [profile, updateProfileInfo] = createStore<Profile>(getProfileInfo(id));
 
   const getAshitaDirectory = createMemo(() => {
     return profile.install?.ashita_directory ?? (profile.install?.directory + "/Ashita") ?? "";
@@ -97,7 +91,7 @@ const ProfileEditor = () => {
             class="input"
             id="name"
             type="text"
-            placeholder={`Profile ${profiles.ids?.length! + 1}`}
+            placeholder={`Profile ${nextProfileId()}`}
             value={profile.name ?? ""}
             onInput={e => updateProfileInfo("name", e.target.value.trim())}
           >
@@ -418,12 +412,19 @@ const ProfileEditor = () => {
             class="button decline w-full"
             onClick={async () => {
               if (id) {
-                await deleteProfile(id);
+                if (getConfirmDelete()) {
+                  await deleteProfile(id);
+                  setConfirmDelete(false);
+                  navigate("/");
+                } else {
+                  setConfirmDelete(true);
+                }
+              } else {
+                navigate("/");
               }
-              navigate("/");
             }}
           >
-            Delete
+            {getConfirmDelete() ? "Press again to confirm deletion" : "Delete"}
           </button>
         </div>
 

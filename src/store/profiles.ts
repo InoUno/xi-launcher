@@ -1,5 +1,5 @@
-import { createEffect, createResource } from "solid-js";
-import { createStore } from "solid-js/store";
+import { createEffect, createMemo, createResource } from "solid-js";
+import { createStore, unwrap } from "solid-js/store";
 import { commands, Profile, Profiles } from "../bindings";
 import { unwrapResult } from "../util";
 
@@ -35,8 +35,29 @@ export function createProfilesStore() {
     }
   };
 
+  // Next profile ID
+  const nextProfileId = createMemo(() => {
+    return (profiles.ids?.length ?? 0) + 1;
+  });
+
+  const getProfileInfo = (id?: number) => {
+    if (!id || !profiles.map?.[id]) {
+      const profileId = nextProfileId();
+      return {
+        id: 0,
+        name: `Profile ${profileId}`,
+        install: {},
+        is_retail: false,
+      };
+    } else {
+      return structuredClone(unwrap(profiles.map[id]!));
+    }
+  };
+
   return {
     profiles,
+    nextProfileId,
+    getProfileInfo,
     saveProfile,
     profilesRefetch,
     deleteProfile,
