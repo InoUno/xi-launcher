@@ -1,6 +1,6 @@
 {
   "name": "xi-launcher",
-  "version": "0.4.6",
+  "version": "0.5.0",
   "description": "XI Launcher",
   "type": "module",
   "scripts": {
