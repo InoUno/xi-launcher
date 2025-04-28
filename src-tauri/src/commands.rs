@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{path::PathBuf, process::Command};
 
 use serde::{Deserialize, Serialize};
 use specta::Type;
@@ -235,6 +235,7 @@ pub async fn launch_profile(
     id: u32,
     password: Option<String>,
     state: AppState<'_>,
+    app_handle: AppHandle,
 ) -> Result<(), String> {
     let read_state = state.read().await;
 
@@ -249,7 +250,7 @@ pub async fn launch_profile(
             .await
             .map_err(|err| format!("Failed to launch game: {err:?}"))?;
     } else {
-        ashita::launch_game(profile, password)
+        ashita::launch_game(profile, password, &app_handle)
             .await
             .map_err(|err| format!("Failed to launch game: {err:?}"))?;
     }
@@ -325,4 +326,30 @@ pub async fn list_ashita_plugins(ashita_directory: PathBuf) -> Result<Vec<String
     }
 
     Ok(plugins)
+}
+
+#[tauri::command]
+#[specta::specta]
+pub async fn configure_gamepad(game_directory: PathBuf) -> Result<(), String> {
+    if !game_directory.exists() {
+        return Err(format!(
+            "Can't configure gamepad without having the game installed at {}",
+            game_directory.display()
+        ));
+    };
+
+    let gamepad_tool = game_directory.join("FINAL FANTASY XI\\ToolsUS\\FFXiPadConfig.exe");
+
+    if !gamepad_tool.exists() {
+        return Err(format!(
+            "Could not find gamepad configuration tool at {}",
+            gamepad_tool.display()
+        ));
+    }
+
+    Command::new(gamepad_tool)
+        .spawn()
+        .map_err(|err| format!("{err:?}"))?;
+
+    Ok(())
 }

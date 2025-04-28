@@ -67,6 +67,10 @@ h4 {
 
 button {
   @apply cursor-pointer drop-shadow-lg;
+
+  &:disabled {
+    cursor: not-allowed;
+  }
 }
 
 .button {

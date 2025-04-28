@@ -14,6 +14,7 @@ use crate::config::profiles::{AuthKind, Profile};
 pub async fn launch_game(
     profile: &Profile,
     provided_password: Option<String>,
+    app_handle: &AppHandle,
 ) -> anyhow::Result<()> {
     let mut exe = profile.install.try_get_ashita_dir()?;
     exe.push("Ashita-cli.exe");
@@ -22,6 +23,7 @@ pub async fn launch_game(
         return Err(anyhow!("Ashita executable not found at: {}", exe.display()));
     }
 
+    update_ashita_files(profile, app_handle).await?;
     let profile_filename = profile.get_profile_filename();
     update_gamepad_config(profile).await?;
 
@@ -96,12 +98,16 @@ pub async fn launch_game(
 }
 
 pub async fn update_ashita_files(profile: &Profile, app_handle: &AppHandle) -> anyhow::Result<()> {
+    let ashita_directory = profile.install.try_get_ashita_dir()?;
+    if !ashita_directory.exists() {
+        return Ok(());
+    }
+
     let profile_filename = profile.get_profile_filename();
     let server_folder_name = profile.get_server_filename();
 
     make_script_file(profile, &profile_filename).await?;
 
-    let ashita_directory = profile.install.try_get_ashita_dir()?;
     let ini_file_path = ashita_directory.join(format!("config/boot/{}.ini", &profile_filename));
 
     // Update profile ini file if it exists already
@@ -169,6 +175,22 @@ pub async fn update_ashita_files(profile: &Profile, app_handle: &AppHandle) -> a
                 .set("file", bootloader_path.to_str().unwrap());
         }
     }
+
+    // Input configuration
+    ashita_ini
+        .with_section(Some("ashita.input"))
+        .set(
+            "gamepad.disableenumeration",
+            if profile.enable_gamepad { "0" } else { "1" },
+        )
+        .set(
+            "gamepad.allowbackground",
+            if profile.enable_gamepad_background {
+                "1"
+            } else {
+                "0"
+            },
+        );
 
     // Sandbox paths
     ashita_ini

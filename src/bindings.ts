@@ -108,6 +108,14 @@ async listAshitaPlugins(ashitaDirectory: string) : Promise<Result<string[], stri
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
+},
+async configureGamepad(gameDirectory: string) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("configure_gamepad", { gameDirectory }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
 }
 }
 
@@ -130,7 +138,7 @@ export type InstallConfig = { directory?: string | null;
 ashita_directory?: string | null; windower_directory?: string | null }
 export type InstallTaskProgress = { event: "Pending" } | { event: "DownloadStarted"; data: { content_length: number } } | { event: "DownloadProgress"; data: { finished_length: number } } | { event: "Installing" } | { event: "Complete" } | { event: "Error"; data: string }
 export type LaunchStatus = { type: "NeedsGameDir" } | { type: "NeedsInstall" } | { type: "NeedsAndCanInstall"; data: { download_info: FileInstallConfig[] } } | { type: "NeedsAshita" } | { type: "NeedsWindower" } | { type: "NeedsUpdate"; data: { versions_info: VersionsInfo } } | { type: "NeedsPassword" } | { type: "Ready" }
-export type Profile = { id: number; name?: string | null; server?: string | null; server_nickname?: string | null; server_info_addr?: string | null; use_windower?: boolean; is_retail?: boolean; install?: InstallConfig; account_name?: string | null; password?: string | null; auth_kind?: AuthKind; manual_auth?: boolean; hairpin?: boolean; resolution?: Resolution; background_resolution?: Resolution; menu_resolution?: Resolution; enabled_addons?: string[] | null; enabled_plugins?: string[] | null; extra_pivots?: string[]; windower_profile?: string | null }
+export type Profile = { id: number; name?: string | null; server?: string | null; server_nickname?: string | null; server_info_addr?: string | null; use_windower?: boolean; is_retail?: boolean; install?: InstallConfig; account_name?: string | null; password?: string | null; auth_kind?: AuthKind; manual_auth?: boolean; hairpin?: boolean; enable_gamepad?: boolean; enable_gamepad_background?: boolean; resolution?: Resolution; background_resolution?: Resolution; menu_resolution?: Resolution; enabled_addons?: string[] | null; enabled_plugins?: string[] | null; extra_pivots?: string[]; windower_profile?: string | null }
 export type Profiles = { ids?: number[]; map?: Partial<{ [key in number]: Profile }> }
 export type Resolution = { width: number; height: number }
 export type TAURI_CHANNEL<TSend> = null

@@ -370,7 +370,40 @@ const ProfileEditor = () => {
               }}
             />
           </div>
-          <div class="field half"></div>
+
+          <div class="field half">
+            <input
+              id="enable_gamepad"
+              type="checkbox"
+              checked={profile.enable_gamepad ?? false}
+              onChange={e => updateProfileInfo("enable_gamepad", e.target.checked)}
+            >
+            </input>
+            <label for="enable_gamepad">Gamepad</label>
+          </div>
+          <Show when={profile.enable_gamepad}>
+            <div class="field">
+              <div class="half">
+                <button
+                  class="button neutral w-full"
+                  disabled={!profile.install?.directory}
+                  onClick={async () => await commands.configureGamepad(profile.install!.directory!)}
+                >
+                  Configure Gamepad
+                </button>
+              </div>
+              <div class="half">
+                <input
+                  id="enable_gamepad_background"
+                  type="checkbox"
+                  checked={profile.enable_gamepad_background ?? false}
+                  onChange={e => updateProfileInfo("enable_gamepad_background", e.target.checked)}
+                >
+                </input>
+                <label for="enable_gamepad_background">Allow gamepad use in background</label>
+              </div>
+            </div>
+          </Show>
         </Show>
 
         <Show when={profile.use_windower}>

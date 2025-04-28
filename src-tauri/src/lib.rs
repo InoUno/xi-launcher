@@ -34,6 +34,7 @@ pub fn run() {
         commands::cancel_possible_profile_task,
         commands::list_ashita_addons,
         commands::list_ashita_plugins,
+        commands::configure_gamepad,
     ]);
 
     #[cfg(debug_assertions)]
@@ -76,6 +77,7 @@ pub fn run() {
             commands::cancel_possible_profile_task,
             commands::list_ashita_addons,
             commands::list_ashita_plugins,
+            commands::configure_gamepad,
         ])
         .setup(move |app| {
             specta_builder.mount_events(app);

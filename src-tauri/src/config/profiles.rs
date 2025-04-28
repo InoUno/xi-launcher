@@ -58,6 +58,14 @@ pub struct Profile {
     #[serde(default)]
     pub hairpin: bool,
 
+    #[serde(skip_serializing_if = "serde_util::is_false")]
+    #[serde(default)]
+    pub enable_gamepad: bool,
+
+    #[serde(skip_serializing_if = "serde_util::is_false")]
+    #[serde(default)]
+    pub enable_gamepad_background: bool,
+
     #[serde(default)]
     pub resolution: Resolution,
 
