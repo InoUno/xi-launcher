@@ -75,6 +75,14 @@ pub struct Profile {
     #[serde(default)]
     pub menu_resolution: Resolution,
 
+    #[serde(skip_serializing_if = "serde_util::is_minus_one")]
+    #[serde(default = "serde_util::default_minus_one")]
+    pub start_pos_x: i32,
+
+    #[serde(skip_serializing_if = "serde_util::is_minus_one")]
+    #[serde(default = "serde_util::default_minus_one")]
+    pub start_pos_y: i32,
+
     #[serde(default)]
     pub enabled_addons: Option<Vec<String>>,
 

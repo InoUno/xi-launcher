@@ -372,6 +372,48 @@ const ProfileEditor = () => {
           </div>
 
           <div class="field half">
+            <label class="label">
+              Window position (centered is -1)
+            </label>
+            <div class="w-full flex flex-row gap-1 items-center">
+              <div class="w-1/2 relative inline-flex items-center">
+                <span class="absolute left-3 text-gray-400">x:</span>
+                <input
+                  type="number"
+                  step={10}
+                  value={profile.start_pos_x ?? -1}
+                  onChange={e => {
+                    let val = parseInt(e.target.value);
+                    if (isNaN(val)) {
+                      val = -1;
+                    }
+                    updateProfileInfo("start_pos_x", val);
+                  }}
+                  class="text-center"
+                >
+                </input>
+              </div>
+              <div class="w-1/2 relative inline-flex items-center">
+                <span class="absolute left-3 text-gray-400">y:</span>
+                <input
+                  step={10}
+                  type="number"
+                  value={profile.start_pos_y ?? -1}
+                  onChange={e => {
+                    let val = parseInt(e.target.value);
+                    if (isNaN(val)) {
+                      val = -1;
+                    }
+                    updateProfileInfo("start_pos_y", val);
+                  }}
+                  class="text-center"
+                >
+                </input>
+              </div>
+            </div>
+          </div>
+
+          <div class="field half">
             <input
               id="enable_gamepad"
               type="checkbox"
@@ -381,6 +423,7 @@ const ProfileEditor = () => {
             </input>
             <label for="enable_gamepad">Gamepad</label>
           </div>
+          <div class="field half"></div>
           <Show when={profile.enable_gamepad}>
             <div class="field">
               <div class="half">

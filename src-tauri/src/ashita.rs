@@ -220,6 +220,12 @@ pub async fn update_ashita_files(profile: &Profile, app_handle: &AppHandle) -> a
         .set("0037", profile.menu_resolution.width.to_string())
         .set("0038", profile.menu_resolution.height.to_string());
 
+    // Window start position
+    ashita_ini
+        .with_section(Some("ashita.window.startpos"))
+        .set("x", profile.start_pos_x.to_string())
+        .set("y", profile.start_pos_y.to_string());
+
     // Pivot
     generate_pivot_ini(profile, &profile_filename, &server_folder_name).await?;
 
